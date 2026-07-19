@@ -1,12 +1,18 @@
 {
   "version": 2,
   "functions": {
-    "api/index.js": {
+    "api/webhook.js": {
       "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/upload.js": {
+      "maxDuration": 60,
       "memory": 1024
     }
   },
   "rewrites": [
-    { "source": "/", "destination": "/public/index.html" }
+    { "source": "/api/webhook", "destination": "/api/webhook.js" },
+    { "source": "/api/upload", "destination": "/api/upload.js" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
