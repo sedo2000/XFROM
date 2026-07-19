@@ -1,13 +1,9 @@
 // api/admin.js
 // لوحة تحكم الإدمن (مبنية على نفس نمط لوحات المفاتيح Inline المستخدم في البوت).
-//
-// الوصول للوحة: أي معرف تلجرام موجود ضمن متغير البيئة ADMIN_IDS
-// (أرقام مفصولة بفواصل، مثال: "111111111,222222222")
-//
-// ⚠️ ملاحظة صراحةً: قسم "الاشتراك" و"المالية" هنا هو أدوات تتبّع وتسجيل يدوي
-// فقط (منح/سحب اشتراك، تسجيل دفعة، عرض إجمالي) وليس بوابة دفع فعلية —
-// لم تُحدَّد وسيلة دفع، فلا يمكن ربط تحصيل حقيقي تلقائيًا دون تفاصيل إضافية
-// (مثل Stripe أو بوابة دفع محلية).
+
+// 🔥 الإصلاح: استيراد الملفات المساعدة وقاعدة البيانات لمنع خطأ "D is not defined"
+const D = require('./db'); 
+const U = require('./converters'); // أو اسم الملف المسؤول عن دالة sendMessage / editMessage إذا كان مختلفاً
 
 function parseAdminIds() {
   const idsStr = process.env.ADMIN_IDS;
@@ -209,10 +205,8 @@ function startAdminInput(chatId, stage, extra = {}) {
   adminSessions.set(chatId, { stage, ...extra });
 }
 
-/* ================= معالجة نصوص الإدمن (بعد الضغط على أزرار تطلب إدخال) ================= */
+/* ================= معالجة نصوص الإدمن ================= */
 
-// تُستدعى من index.js قبل أي معالجة أخرى للرسائل، إن كانت هناك جلسة إدمن مفتوحة.
-// تُعيد true إن كانت قد تعاملت مع الرسالة.
 async function handleAdminText(chatId, text) {
   const session = adminSessions.get(chatId);
   if (!session) return false;
@@ -342,7 +336,6 @@ async function handleAdminText(chatId, text) {
         } catch (_) {
           failed++;
         }
-        // تهدئة بسيطة لتفادي حدود تلجرام لمعدل الإرسال
         await new Promise((r) => setTimeout(r, 40));
       }
       await U.sendMessage(chatId, `✅ اكتمل البث.\nتم الإرسال إلى: ${sent}\nفشل: ${failed}`);
@@ -370,7 +363,6 @@ async function handleAdminText(chatId, text) {
 
 /* ================= معالجة أزرار لوحة الإدمن ================= */
 
-// تُستدعى من index.js عند استقبال callback_data يبدأ بـ "admin:"
 async function handleAdminCallback(cq) {
   const chatId = cq.message.chat.id;
   const messageId = cq.message.message_id;
