@@ -1,7 +1,11 @@
 {
-  "name": "my-vercel-project",
+  "name": "xfrom-project",
   "version": "1.0.0",
   "description": "Minimal Vercel project with frontend and backend",
-  "main": "api/index.js",
-  "dependencies": {}
+  "main": "api/webhook.js",
+  "type": "module",
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "dotenv": "^16.4.5"
+  }
 }
