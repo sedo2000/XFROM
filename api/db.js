@@ -1,15 +1,21 @@
 // api/db.js
-// طبقة تخزين بيانات لوحة الإدمن باستخدام Vercel KV (متوافقة مع Upstash Redis).
-//
-// متغيرات البيئة المطلوبة (تُضاف تلقائيًا عند ربط مشروع Vercel بقاعدة Vercel KV،
-// أو يدويًا إن كنت تستخدم Upstash مباشرة):
-//   KV_REST_API_URL
-//   KV_REST_API_TOKEN
-//   KV_REST_API_READ_ONLY_TOKEN (اختياري)
-//
-// تثبيت الحزمة: npm install @vercel/kv
+// طبقة تخزين بيانات لوحة الإدمن باستخدام Vercel KV المتوافقة والمربوطة عبر Upstash Redis مجاناً.
 
-const { kv } = require('@vercel/kv');
+const { createClient } = require('@vercel/kv');
+
+// جلب المتغيرات بالأسماء الدقيقة التي تم إنشاؤها في لوحة تحكم Upstash
+const url = process.env.UPSTASH_KV_REST_API_URL || process.env.KV_REST_API_URL;
+const token = process.env.UPSTASH_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
+
+if (!url || !token) {
+  console.error("⚠️ Upstash KV environment variables are missing!");
+}
+
+// إنشاء مثيل مخصص يتوافق مع إعدادات التسمية الجديدة
+const kv = createClient({
+  url: url,
+  token: token,
+});
 
 /* ================= المستخدمون ================= */
 
