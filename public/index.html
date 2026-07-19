@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Xform — كل تحويلاتك في مكان واحد</title>
+<link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/sedo2000/jpg/refs/heads/main/xform-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0b1220;
+    --bg2:#131b30;
+    --bg3:#1c2847;
+    --card:rgba(30,42,70,0.55);
+    --card-top:rgba(42,56,92,0.65);
+    --card-border:rgba(255,255,255,0.10);
+    --card-border-hover:rgba(255,255,255,0.30);
+    --accent1:#57d9c4;
+    --accent1-2:#3fa9ff;
+    --accent2:#ff6f91;
+    --accent2-2:#ffa8c0;
+    --text:#f5f7fb;
+    --text-dim:rgba(245,247,251,0.72);
+    --text-dimmer:rgba(245,247,251,0.48);
+    --success:#4ade80;
+    --danger:#f87171;
+    --radius:18px;
+    --phone-w:430px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Tajawal', sans-serif;
+    background:
+      radial-gradient(ellipse 700px 500px at 20% -5%, rgba(255,111,145,0.16), transparent 60%),
+      radial-gradient(ellipse 600px 460px at 100% 15%, rgba(87,217,196,0.16), transparent 55%),
+      linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+    display:flex;
+    justify-content:center;
+  }
+  h1,h2,h3,.display{font-family:'Cairo', sans-serif;}
+
+  /* mobile-only app frame: the whole experience is constrained to a phone-width column,
+     regardless of the viewport it's opened on */
+  .app-shell{
+    width:100%; max-width:var(--phone-w);
+    min-height:100vh;
+    position:relative; z-index:1;
+    background:rgba(8,13,24,0.25);
+  }
+  @media(min-width:540px){
+    .app-shell{
+      box-shadow:0 0 0 1px rgba(255,255,255,0.06), 0 40px 100px rgba(0,0,0,0.55);
+      margin:18px 0;
+      min-height:calc(100vh - 36px);
+      border-radius:34px;
+      overflow:hidden;
+    }
+  }
+
+  /* decorative doodle layer */
+  .doodle-layer{position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
+  .doodle{position:absolute; opacity:0.5;}
+
+  /* header */
+  header{
+    position:sticky; top:0; z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(11,18,32,0.55);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .nav-inner{
+    padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .logo{display:flex; align-items:center; gap:10px; font-weight:800; font-size:20px;}
+  .logo .mark{
+    width:50px; height:30px; border-radius:9px;
+    background:rgba(255,255,255,0.92);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; padding:4px 6px;
+    box-shadow:0 4px 14px rgba(87,217,196,0.35);
+  }
+  .logo .mark img{max-width:100%; max-height:100%; object-fit:contain;}
+  .pixel-logo{
+    font-family:'Press Start 2P', 'Cairo', sans-serif;
+    font-size:14px;
+    letter-spacing:1px;
+    direction:ltr;
+    background:linear-gradient(90deg,var(--accent1),var(--accent1-2),var(--accent2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    line-height:1;
+  }
+  footer .pixel-logo{font-size:14px;}
+
+  .search-wrap{position:relative; width:150px; flex-shrink:0;}
+  .search-wrap input{
+    width:100%; padding:9px 14px 9px 34px; border-radius:100px; border:1px solid var(--card-border);
+    background:rgba(255,255,255,0.08); color:var(--text); font-family:inherit; font-size:13px; outline:none;
+    transition:.2s;
+  }
+  .search-wrap input::placeholder{color:var(--text-dimmer);}
+  .search-wrap input:focus{border-color:var(--card-border-hover); background:rgba(255,255,255,0.13);}
+  .search-wrap svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:0.6;}
+
+  /* hero */
+  .hero{
+    position:relative; z-index:1;
+    padding:44px 20px 28px; text-align:center;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,0.08); border:1px solid var(--card-border);
+    padding:6px 14px; border-radius:100px; font-size:12px; color:var(--text-dim);
+    margin-bottom:22px;
+  }
+  .eyebrow .dot{width:7px; height:7px; border-radius:50%; background:var(--success); box-shadow:0 0 8px var(--success);}
+  .hero h1{
+    font-size:clamp(28px, 8vw, 38px); font-weight:900; line-height:1.2; margin-bottom:16px;
+    letter-spacing:-0.3px;
+  }
+  .hero h1 span{
+    background:linear-gradient(90deg, var(--accent2), var(--accent2-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{font-size:15.5px; color:var(--text-dim); margin:0 auto 26px; line-height:1.7;}
+  .hero-stats{display:flex; gap:22px; justify-content:center; flex-wrap:wrap; margin-top:6px;}
+  .stat b{display:block; font-family:'Cairo'; font-size:22px; font-weight:800; background:linear-gradient(90deg,var(--accent1),var(--accent1-2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .stat span{font-size:12px; color:var(--text-dimmer);}
+
+  /* sections */
+  .section{position:relative; z-index:1; padding:30px 18px;}
+  .section-head{display:flex; align-items:center; gap:12px; margin-bottom:20px;}
+  .section-head .icon{
+    width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    font-size:19px; background:rgba(255,255,255,0.08); border:1px solid var(--card-border);
+  }
+  .section-head h2{font-size:19px; font-weight:800;}
+  .section-head .count{
+    margin-right:auto; font-size:12px; color:var(--text-dimmer);
+    background:rgba(255,255,255,0.06); padding:5px 11px; border-radius:100px;
+  }
+
+  .grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;}
+  .tool-card{
+    background:linear-gradient(160deg, var(--card-top), var(--card));
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:16px 14px;
+    cursor:pointer;
+    transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    position:relative;
+    overflow:hidden;
+    min-height:104px;
+    display:flex; flex-direction:column; gap:8px; justify-content:space-between;
+  }
+  .tool-card:active{transform:translateY(-2px) scale(0.98); border-color:var(--card-border-hover);}
+  .tool-card .top-row{display:flex; align-items:flex-start; justify-content:space-between;}
+  .tool-card .emoji{font-size:23px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));}
+  .tool-card .name{font-weight:700; font-size:13.5px; line-height:1.4;}
+  .badge-new{
+    font-size:10px; color:var(--accent1); background:rgba(87,217,196,0.14);
+    border:1px solid rgba(87,217,196,0.3); padding:2px 8px; border-radius:100px; align-self:flex-start;
+  }
+
+  footer{
+    position:relative; z-index:1; text-align:center; padding:40px 20px 30px;
+    color:var(--text-dimmer); font-size:12.5px; border-top:1px solid rgba(255,255,255,0.08); margin-top:20px;
+  }
+  footer .foot-title{justify-content:center; margin-bottom:12px; display:flex;}
+
+  /* modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(4,8,16,0.72); backdrop-filter:blur(6px);
+    display:none; align-items:flex-end; justify-content:center; z-index:100;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    width:100%; max-width:var(--phone-w); max-height:90vh; overflow-y:auto;
+    background:linear-gradient(160deg, #202c4c, #131a30);
+    border:1px solid var(--card-border-hover);
+    border-radius:24px 24px 0 0; padding:24px; position:relative;
+    animation:pop .22s ease;
+  }
+  @keyframes pop{from{opacity:0; transform:translateY(24px);} to{opacity:1; transform:translateY(0);}}
+  .modal-close{
+    position:absolute; top:16px; left:16px; width:32px; height:32px; border-radius:50%;
+    background:rgba(255,255,255,0.1); border:none; color:var(--text); font-size:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:.2s;
+  }
+  .modal-close:hover{background:rgba(255,255,255,0.2);}
+  .modal-head{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .modal-head .emoji{font-size:25px;}
+  .modal-head h3{font-size:17px; font-weight:800;}
+  .modal-desc{color:var(--text-dim); font-size:13px; margin-bottom:18px; line-height:1.6;}
+
+  .dropzone{
+    border:2px dashed var(--card-border-hover); border-radius:16px; padding:24px 14px;
+    text-align:center; cursor:pointer; transition:.2s; background:rgba(255,255,255,0.04);
+  }
+  .dropzone:hover, .dropzone.drag{background:rgba(255,255,255,0.09); border-color:var(--accent1);}
+  .dropzone .dz-icon{font-size:26px; margin-bottom:8px;}
+  .dropzone .dz-main{font-weight:700; font-size:13.5px; margin-bottom:4px;}
+  .dropzone .dz-sub{font-size:11.5px; color:var(--text-dimmer);}
+
+  .file-list{margin-top:12px; display:flex; flex-direction:column; gap:7px;}
+  .file-item{
+    display:flex; align-items:center; gap:9px; background:rgba(255,255,255,0.07);
+    border:1px solid var(--card-border); border-radius:12px; padding:8px 11px; font-size:12.5px;
+  }
+  .file-item .fi-name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .file-item .fi-size{color:var(--text-dimmer); font-size:11px;}
+  .file-item button{background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px; padding:2px 4px;}
+  .file-item .fi-move{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;}
+
+  .opt-group{margin-top:16px;}
+  .opt-group label{display:block; font-size:12.5px; color:var(--text-dim); margin-bottom:6px; font-weight:500;}
+  .opt-group input[type=text], .opt-group input[type=number], .opt-group select{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);
+    background:rgba(255,255,255,0.07); color:var(--text); font-family:inherit; font-size:13.5px; outline:none;
+  }
+  .opt-group input:focus, .opt-group select:focus{border-color:var(--accent1);}
+  .seg{display:flex; gap:6px; background:rgba(255,255,255,0.06); padding:4px; border-radius:10px;}
+  .seg button{
+    flex:1; background:none; border:none; color:var(--text-dim); padding:8px; border-radius:8px; cursor:pointer;
+    font-family:inherit; font-size:12.5px; transition:.2s;
+  }
+  .seg button.active{background:var(--accent1); color:#062822; font-weight:700;}
+
+  .btn-primary{
+    width:100%; margin-top:20px; padding:13px; border-radius:12px; border:none; cursor:pointer;
+    background:linear-gradient(90deg, var(--accent1), var(--accent1-2)); color:#06182b; font-weight:800; font-size:14.5px;
+    font-family:inherit; transition:.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-primary:disabled{opacity:0.5; cursor:not-allowed;}
+  .btn-secondary{
+    width:100%; margin-top:10px; padding:12px; border-radius:12px; cursor:pointer;
+    background:rgba(255,255,255,0.08); border:1px solid var(--card-border); color:var(--text); font-weight:700;
+    font-family:inherit; font-size:13.5px; transition:.2s;
+  }
+  .btn-secondary:hover{background:rgba(255,255,255,0.14);}
+
+  .status-box{margin-top:16px; font-size:13px; color:var(--text-dim); text-align:center; min-height:18px;}
+  .progress-bar{height:6px; border-radius:100px; background:rgba(255,255,255,0.1); overflow:hidden; margin-top:10px; display:none;}
+  .progress-bar.on{display:block;}
+  .progress-bar i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent1),var(--accent1-2)); transition:width .2s;}
+
+  .result-box{
+    margin-top:14px; display:none; text-align:center; background:rgba(74,222,128,0.1);
+    border:1px solid rgba(74,222,128,0.35); border-radius:14px; padding:16px;
+  }
+  .result-box.on{display:block;}
+  .result-box .r-icon{font-size:26px; margin-bottom:8px;}
+  .result-box p{font-size:12.5px; color:var(--text-dim); margin-bottom:12px;}
+  .download-btn{
+    display:inline-flex; align-items:center; gap:8px; background:var(--success); color:#0b3a1f;
+    font-weight:800; padding:11px 20px; border-radius:10px; text-decoration:none; font-size:13.5px;
+  }
+  .note-box{
+    margin-top:12px; background:rgba(255,111,145,0.09); border:1px solid rgba(255,111,145,0.28);
+    border-radius:12px; padding:10px 12px; font-size:11.5px; color:var(--text-dim); line-height:1.6;
+  }
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2); border-radius:100px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+<div class="doodle-layer" id="doodleLayer"></div>
+
+<header>
+  <div class="nav-inner">
+    <div class="logo">
+      <span class="mark">
+        <img src="https://raw.githubusercontent.com/sedo2000/jpg/refs/heads/main/xform-logo.svg" alt="Xform">
+      </span>
+      <span class="pixel-logo">XFORM</span>
+    </div>
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="ابحث عن أداة...">
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow"><span class="dot"></span> تحويل فوري داخل المتصفح — بلا رفع لأي سيرفر</div>
+  <h1>حوّل ملفاتك <span>بلمسة واحدة</span></h1>
+  <p>ادمج، اضغط، اقصّ، وحوّل ملفات PDF والصور والمستندات في ثوانٍ. كل المعالجة تتم على جهازك، وملفاتك لا تغادر متصفحك أبدًا.</p>
+  <div class="hero-stats">
+    <div class="stat"><b>30+</b><span>أداة تحويل</span></div>
+    <div class="stat"><b>100%</b><span>خصوصية كاملة</span></div>
+    <div class="stat"><b>0</b><span>ثانية انتظار سيرفر</span></div>
+  </div>
+</section>
+
+<section class="section" id="pdf-tools">
+  <div class="section-head">
+    <div class="icon">📄</div>
+    <h2>عمليات PDF</h2>
+    <div class="count" data-count-for="pdf"></div>
+  </div>
+  <div class="grid" id="grid-pdf"></div>
+</section>
+
+<section class="section" id="image-tools">
+  <div class="section-head">
+    <div class="icon">🖼️</div>
+    <h2>عمليات الصور</h2>
+    <div class="count" data-count-for="image"></div>
+  </div>
+  <div class="grid" id="grid-image"></div>
+</section>
+
+<section class="section" id="doc-tools">
+  <div class="section-head">
+    <div class="icon">📝</div>
+    <h2>تحويل المستندات</h2>
+    <div class="count" data-count-for="doc"></div>
+  </div>
+  <div class="grid" id="grid-doc"></div>
+</section>
+
+<footer>
+  <div class="foot-title"><span class="pixel-logo">XFORM</span></div>
+  جميع عمليات التحويل تتم محليًا داخل متصفحك — لا يتم رفع ملفاتك لأي خادم خارجي.
+</footer>
+
+</div><!-- /app-shell -->
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<!-- libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
+<script>
+/* ================= doodle background ================= */
+(function(){
+  const layer = document.getElementById('doodleLayer');
+  const flower = `<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M110 20c30 0 30 40 0 40s-30-40 0-40Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M110 160c30 0 30 40 0 40s-30-40 0-40Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M20 110c0-30 40-30 40 0s-40 30-40 0Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M160 110c0-30 40-30 40 0s-40 30-40 0Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M50 50c21-21 49 7 28 28s-49-7-28-28Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M142 142c21-21 49 7 28 28s-49-7-28-28Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M50 170c-21-21 7-49 28-28s-7 49-28 28Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <path d="M142 78c-21-21 7-49 28-28s-7 49-28 28Z" stroke="#ff6f91" stroke-width="10" opacity="0.45"/>
+    <circle cx="110" cy="110" r="10" stroke="#ff6f91" stroke-width="8" opacity="0.45"/>
+  </svg>`;
+  const ring = `<svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="70" cy="70" r="55" stroke="#57d9c4" stroke-width="14" opacity="0.35"/>
+  </svg>`;
+  const positions = [
+    {top:'-4%', left:'-10%', svg:flower, size:200, rot:0},
+    {top:'6%', right:'-8%', svg:ring, size:120, rot:0},
+    {top:'45%', right:'-12%', svg:flower, size:210, rot:20},
+    {top:'78%', left:'-10%', svg:flower, size:180, rot:-15},
+  ];
+  positions.forEach(p=>{
+    const d = document.createElement('div');
+    d.className='doodle';
+    d.style.top = p.top || 'auto';
+    d.style.left = p.left || 'auto';
+    d.style.right = p.right || 'auto';
+    d.style.width = p.size+'px';
+    d.style.transform = `rotate(${p.rot}deg)`;
+    d.innerHTML = p.svg;
+    layer.appendChild(d);
+  });
+})();
+
+/* ================= tool registry ================= */
+const TOOLS = [
+  {id:'merge', cat:'pdf', name:'دمج ملفات PDF', emoji:'➕', desc:'اجمع عدة ملفات PDF في ملف واحد بالترتيب الذي تحدده.', accept:'.pdf', multi:true, status:'ready'},
+  {id:'split', cat:'pdf', name:'تقسيم PDF', emoji:'✂️', desc:'قسّم ملف PDF إلى ملفات منفصلة، كل صفحة في ملف، داخل أرشيف ZIP.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'compress', cat:'pdf', name:'ضغط PDF', emoji:'🗜️', desc:'قلّل حجم ملف PDF عبر إعادة بنائه الداخلية.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'rotate', cat:'pdf', name:'تدوير PDF', emoji:'🔄', desc:'دوّر جميع صفحات الملف بزاوية تختارها.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'repair', cat:'pdf', name:'إصلاح PDF', emoji:'🔧', desc:'يحاول إعادة بناء ملف PDF تالف أو لا يفتح بشكل صحيح.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'insert', cat:'pdf', name:'إدراج صفحات', emoji:'📄', desc:'أدرج صفحات ملف PDF آخر داخل ملفك في موضع محدد.', accept:'.pdf', multi:true, status:'ready'},
+  {id:'watermark', cat:'pdf', name:'إضافة علامة مائية', emoji:'💧', desc:'ضع نصًا شفافًا كعلامة مائية على كل الصفحات.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'pagenumbers', cat:'pdf', name:'ترقيم الصفحات', emoji:'#️⃣', desc:'أضف أرقام الصفحات تلقائيًا في أي زاوية تريدها.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'crop', cat:'pdf', name:'قص PDF', emoji:'✂️', desc:'قصّ هوامش صفحات الملف بنسبة مئوية من كل جانب.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'splitrange', cat:'pdf', name:'تقسيم نطاق صفحات', emoji:'📑', desc:'قسّم الملف إلى نطاقين حسب رقم صفحة تحدده.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'extract', cat:'pdf', name:'استخراج صفحات محددة', emoji:'📌', desc:'استخرج صفحات معينة فقط (مثال: 1,3,5-8) إلى ملف جديد.', accept:'.pdf', multi:false, status:'ready'},
+
+  {id:'img2pdf', cat:'image', name:'صور إلى PDF', emoji:'📸', desc:'حوّل صورة أو أكثر إلى ملف PDF واحد بالترتيب.', accept:'image/*', multi:true, status:'ready'},
+  {id:'pdf2img', cat:'image', name:'PDF إلى صور', emoji:'🖼️', desc:'حوّل صفحات ملف PDF إلى صور PNG داخل أرشيف ZIP.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'scan2pdf', cat:'image', name:'صور ممسوحة ضوئياً إلى PDF', emoji:'📠', desc:'حوّل صور المستندات الممسوحة ضوئيًا إلى ملف PDF مرتب.', accept:'image/*', multi:true, status:'ready'},
+
+  {id:'pdf2word', cat:'doc', name:'PDF إلى Word', emoji:'📝', desc:'استخراج نص ملف PDF وتحويله إلى مستند Word (.doc) قابل للتحرير.', accept:'.pdf', multi:false, status:'ready',
+    note:'تحويل قائم على استخراج النصوص من الملف؛ يحافظ على الفقرات وترتيب الصفحات لكنه لا يعيد إنشاء تصميم الصفحة الأصلي بدقة كاملة (جداول أو رسومات معقدة).'},
+  {id:'pdf2excel', cat:'doc', name:'PDF إلى Excel', emoji:'📊', desc:'استخراج النصوص من PDF وتوزيعها على خلايا Excel، صفحة لكل ورقة عمل.', accept:'.pdf', multi:false, status:'ready',
+    note:'استخراج نصي مبسّط يفصل الأعمدة عند وجود مسافات كبيرة بين الكلمات، وليس تعرّفًا كاملاً على تصميم الجداول.'},
+  {id:'pdf2ppt', cat:'doc', name:'PDF إلى PowerPoint', emoji:'📽️', desc:'تحويل كل صفحة PDF إلى صورة عالية الدقة داخل شريحة عرض تقديمي.', accept:'.pdf', multi:false, status:'ready'},
+  {id:'pdf2pdfa', cat:'doc', name:'PDF إلى PDF/A', emoji:'📄', desc:'إعادة حفظ الملف مع بيانات وصفية متوافقة مع أرشفة PDF/A.', accept:'.pdf', multi:false, status:'ready',
+    note:'توافق مبسّط (best-effort) على مستوى البيانات الوصفية، وليس تحققًا رسميًا معتمدًا من ISO.'},
+  {id:'word2pdf', cat:'doc', name:'Word إلى PDF', emoji:'📝', desc:'تحويل مستند Word (.docx) إلى ملف PDF مع الحفاظ على الفقرات والتنسيق الأساسي.', accept:'.docx', multi:false, status:'ready',
+    note:'يدعم ملفات .docx الحديثة. التنسيقات المعقدة جدًا (أشكال، أعمدة متعددة) قد تظهر بشكل مبسّط.'},
+  {id:'excel2pdf', cat:'doc', name:'Excel إلى PDF', emoji:'📊', desc:'تحويل كل أوراق العمل في ملف Excel إلى جداول داخل PDF.', accept:'.xlsx,.xls,.csv', multi:false, status:'ready'},
+  {id:'ppt2pdf', cat:'doc', name:'PowerPoint إلى PDF', emoji:'📽️', desc:'استخراج نص كل شريحة من ملف PowerPoint (.pptx) ووضعها في صفحات PDF.', accept:'.pptx', multi:false, status:'ready',
+    note:'يستخرج النص فقط من كل شريحة، ولا يعيد رسم التصميم البصري أو الصور أو الأشكال — إعادة إنشاء العرض المرئي الكامل لملفات PowerPoint داخل المتصفح غير مدعومة حاليًا.'},
+  {id:'url2pdf', cat:'doc', name:'HTML/نص إلى PDF', emoji:'🌐', desc:'حوّل ملف HTML جاهز أو نصًا عاديًا إلى PDF مباشرة داخل متصفحك.', accept:'.html,.htm,.txt', multi:false, status:'ready',
+    note:'جلب رابط خارجي (URL) مباشرة غير ممكن من داخل المتصفح لأسباب أمنية (قيود CORS)، لذا ارفع ملف HTML أو نص جاهزًا بدلًا من كتابة رابط.'},
+];
+
+const catLabel = {pdf:'عمليات PDF', image:'عمليات الصور', doc:'تحويل المستندات'};
+
+function renderGrids(filter=''){
+  ['pdf','image','doc'].forEach(cat=>{
+    const grid = document.getElementById('grid-'+cat);
+    const items = TOOLS.filter(t=>t.cat===cat && t.name.includes(filter));
+    grid.innerHTML = '';
+    items.forEach(t=>{
+      const card = document.createElement('div');
+      card.className = 'tool-card';
+      card.innerHTML = `
+        <div class="top-row">
+          <span class="emoji">${t.emoji}</span>
+        </div>
+        <div class="name">${t.name}</div>`;
+      card.addEventListener('click', ()=>openTool(t.id));
+      grid.appendChild(card);
+    });
+    const countEl = document.querySelector(`[data-count-for="${cat}"]`);
+    if(countEl) countEl.textContent = items.length + ' أداة';
+  });
+}
+renderGrids();
+
+document.getElementById('searchInput').addEventListener('input', e=>{
+  renderGrids(e.target.value.trim());
+});
+
+/* ================= modal & file handling ================= */
+const overlay = document.getElementById('overlay');
+const modalBox = document.getElementById('modalBox');
+let currentFiles = [];
+let currentTool = null;
+
+function closeModal(){
+  overlay.classList.remove('open');
+  currentFiles = [];
+  currentTool = null;
+}
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+function humanSize(bytes){
+  if(bytes < 1024) return bytes+' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/1024/1024).toFixed(2)+' MB';
+}
+
+function openTool(id){
+  const t = TOOLS.find(x=>x.id===id);
+  currentTool = t;
+  currentFiles = [];
+
+  modalBox.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-head"><span class="emoji">${t.emoji}</span><h3>${t.name}</h3></div>
+    <div class="modal-desc">${t.desc}</div>
+    ${t.note ? `<div class="note-box">ℹ️ ${t.note}</div>` : ''}
+    <div class="dropzone" id="dz">
+      <div class="dz-icon">📁</div>
+      <div class="dz-main">اسحب الملف هنا أو اضغط للاختيار</div>
+      <div class="dz-sub">${t.multi ? 'يمكن اختيار عدة ملفات' : 'ملف واحد'}</div>
+      <input type="file" id="fileInput" accept="${t.accept}" ${t.multi?'multiple':''} style="display:none">
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <div id="optionsArea"></div>
+    <button class="btn-primary" id="runBtn" disabled>ابدأ ${t.name}</button>
+    <div class="progress-bar" id="progressBar"><i id="progressFill"></i></div>
+    <div class="status-box" id="statusBox"></div>
+    <div class="result-box" id="resultBox"></div>
+  `;
+  overlay.classList.add('open');
+
+  const dz = document.getElementById('dz');
+  const fileInput = document.getElementById('fileInput');
+  dz.addEventListener('click', ()=>fileInput.click());
+  dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('drag');});
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', e=>handleFiles(e.target.files));
+
+  renderOptions(t);
+  document.getElementById('runBtn').addEventListener('click', ()=>runTool(t));
+}
+
+function handleFiles(fileList){
+  const t = currentTool;
+  const arr = Array.from(fileList);
+  if(!t.multi) currentFiles = [];
+  currentFiles.push(...arr);
+  renderFileList();
+}
+
+function renderFileList(){
+  const box = document.getElementById('fileList');
+  box.innerHTML = '';
+  currentFiles.forEach((f,i)=>{
+    const el = document.createElement('div');
+    el.className = 'file-item';
+    el.innerHTML = `
+      ${currentTool.multi ? `<button class="fi-move" data-i="${i}" data-dir="-1">▲</button><button class="fi-move" data-i="${i}" data-dir="1">▼</button>` : ''}
+      <span class="fi-name">${f.name}</span>
+      <span class="fi-size">${humanSize(f.size)}</span>
+      <button data-i="${i}">✕</button>`;
+    box.appendChild(el);
+  });
+  box.querySelectorAll('button[data-i]:not(.fi-move)').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      currentFiles.splice(parseInt(b.dataset.i),1);
+      renderFileList();
+      updateRunState();
+    });
+  });
+  box.querySelectorAll('.fi-move').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const i = parseInt(b.dataset.i), dir = parseInt(b.dataset.dir);
+      const j = i+dir;
+      if(j<0 || j>=currentFiles.length) return;
+      [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]];
+      renderFileList();
+    });
+  });
+  updateRunState();
+}
+
+function updateRunState(){
+  const btn = document.getElementById('runBtn');
+  if(!btn) return;
+  const t = currentTool;
+  const min = t.id==='merge' ? 2 : 1;
+  btn.disabled = currentFiles.length < min;
+}
+
+function renderOptions(t){
+  const area = document.getElementById('optionsArea');
+  let html = '';
+  if(t.id==='rotate'){
+    html = `<div class="opt-group"><label>زاوية الدوران</label>
+      <div class="seg" id="rotSeg">
+        <button class="active" data-v="90">90°</button>
+        <button data-v="180">180°</button>
+        <button data-v="270">270°</button>
+      </div></div>`;
+  }
+  if(t.id==='watermark'){
+    html = `<div class="opt-group"><label>نص العلامة المائية</label>
+      <input type="text" id="wmText" placeholder="مثال: سري" value="محوّل"></div>
+      <div class="opt-group"><label>حجم الخط</label>
+      <input type="number" id="wmSize" value="48" min="10" max="150"></div>`;
+  }
+  if(t.id==='pagenumbers'){
+    html = `<div class="opt-group"><label>موضع الترقيم</label>
+      <div class="seg" id="posSeg">
+        <button class="active" data-v="bottom-center">أسفل الوسط</button>
+        <button data-v="bottom-right">أسفل اليمين</button>
+        <button data-v="bottom-left">أسفل اليسار</button>
+      </div></div>`;
+  }
+  if(t.id==='crop'){
+    html = `<div class="opt-group"><label>نسبة القص من كل جانب (%)</label>
+      <input type="number" id="cropPct" value="5" min="0" max="40"></div>`;
+  }
+  if(t.id==='splitrange'){
+    html = `<div class="opt-group"><label>قسّم بعد رقم الصفحة</label>
+      <input type="number" id="splitAt" value="1" min="1"></div>`;
+  }
+  if(t.id==='extract'){
+    html = `<div class="opt-group"><label>أرقام الصفحات (مثال: 1,3,5-8)</label>
+      <input type="text" id="extractPages" placeholder="1,3,5-8"></div>`;
+  }
+  if(t.id==='insert'){
+    html = `<div class="opt-group"><label>أدرج بعد رقم الصفحة (0 = في البداية)</label>
+      <input type="number" id="insertAt" value="0" min="0"></div>
+      <div class="modal-desc" style="margin-top:8px;">اختر الملف الأساسي أولًا ثم ملف الصفحات المراد إدراجها كثاني ملف.</div>`;
+  }
+  area.innerHTML = html;
+
+  area.querySelectorAll('.seg').forEach(seg=>{
+    seg.addEventListener('click', e=>{
+      if(e.target.tagName!=='BUTTON') return;
+      seg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  });
+}
+
+function setProgress(pct){
+  const bar = document.getElementById('progressBar');
+  const fill = document.getElementById('progressFill');
+  bar.classList.add('on');
+  fill.style.width = pct+'%';
+}
+function setStatus(msg){
+  document.getElementById('statusBox').textContent = msg;
+}
+function showResult(blob, filename, message){
+  const box = document.getElementById('resultBox');
+  const url = URL.createObjectURL(blob);
+  box.innerHTML = `
+    <div class="r-icon">✅</div>
+    <p>${message}</p>
+    <a class="download-btn" href="${url}" download="${filename}">⬇ تنزيل الملف</a>`;
+  box.classList.add('on');
+  setProgress(100);
+  setStatus('تم بنجاح');
+}
+
+/* ================= shared engine helpers ================= */
+const { PDFDocument, degrees, rgb, StandardFonts } = window.PDFLib || {};
+
+if(window.pdfjsLib){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function readAsArrayBuffer(file){
+  return await file.arrayBuffer();
+}
+
+function ensureLib(obj, name){
+  if(!obj) throw new Error(`تعذّر تحميل مكتبة ${name}. تأكد من اتصالك بالإنترنت ثم أعد المحاولة.`);
+}
+
+function parsePageRanges(str, maxPage){
+  const parts = str.split(',').map(s=>s.trim()).filter(Boolean);
+  const pages = new Set();
+  parts.forEach(p=>{
+    if(p.includes('-')){
+      const [a,b] = p.split('-').map(n=>parseInt(n));
+      for(let i=a;i<=b;i++) if(i>=1 && i<=maxPage) pages.add(i);
+    } else {
+      const n = parseInt(p);
+      if(n>=1 && n<=maxPage) pages.add(n);
+    }
+  });
+  return Array.from(pages).sort((a,b)=>a-b);
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function decodeXmlEntities(s){
+  return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
+}
+
+function wrapText(text, maxChars){
+  const words = text.split(' ');
+  const lines = []; let line='';
+  words.forEach(w=>{
+    if((line+' '+w).trim().length>maxChars){ lines.push(line.trim()); line=w; }
+    else line += ' '+w;
+  });
+  if(line.trim()) lines.push(line.trim());
+  return lines;
+}
+
+/* groups pdf.js text items into visual lines by their y position */
+function groupTextIntoLines(items){
+  const lines = [];
+  let currentY = null, currentLine = [];
+  items.forEach(it=>{
+    const y = Math.round(it.transform[5]);
+    if(currentY===null || Math.abs(y-currentY)>3){
+      if(currentLine.length) lines.push(currentLine.join(' '));
+      currentLine = [it.str];
+      currentY = y;
+    } else {
+      currentLine.push(it.str);
+    }
+  });
+  if(currentLine.length) lines.push(currentLine.join(' '));
+  return lines;
+}
+
+function buildWordHtml(bodyHtml){
+  return `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>مستند محوّل</title>
+  <style>body{font-family:Arial,sans-serif;direction:rtl;} p{margin:0 0 10px; line-height:1.6;}</style>
+  </head><body dir="rtl">${bodyHtml}</body></html>`;
+}
+
+/* renders an off-screen HTML container to a paginated A4 PDF using html2canvas + jsPDF */
+async function renderHtmlContainerToPdf(container){
+  ensureLib(window.html2canvas, 'html2canvas');
+  ensureLib(window.jspdf, 'jsPDF');
+  document.body.appendChild(container);
+  await new Promise(r=>setTimeout(r,60));
+  const canvas = await html2canvas(container, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+  document.body.removeChild(container);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({unit:'pt', format:'a4'});
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const imgW = pageW;
+  const imgH = canvas.height * (imgW/canvas.width);
+  const imgData = canvas.toDataURL('image/jpeg',0.92);
+  let heightLeft = imgH, position = 0;
+  pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+  heightLeft -= pageH;
+  while(heightLeft > 0){
+    position = heightLeft - imgH;
+    pdf.addPage();
+    pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+    heightLeft -= pageH;
+  }
+  return pdf.output('blob');
+}
+
+/* ================= run dispatcher ================= */
+async function runTool(t){
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  setProgress(8);
+  setStatus('جارِ المعالجة...');
+  try{
+    if(t.id==='merge') await doMerge();
+    else if(t.id==='split') await doSplit();
+    else if(t.id==='compress') await doCompress();
+    else if(t.id==='rotate') await doRotate();
+    else if(t.id==='repair') await doRepair();
+    else if(t.id==='insert') await doInsert();
+    else if(t.id==='watermark') await doWatermark();
+    else if(t.id==='pagenumbers') await doPageNumbers();
+    else if(t.id==='crop') await doCrop();
+    else if(t.id==='splitrange') await doSplitRange();
+    else if(t.id==='extract') await doExtract();
+    else if(t.id==='img2pdf' || t.id==='scan2pdf') await doImagesToPdf();
+    else if(t.id==='pdf2img') await doPdfToImages();
+    else if(t.id==='pdf2word') await doPdfToWord();
+    else if(t.id==='pdf2excel') await doPdfToExcel();
+    else if(t.id==='pdf2ppt') await doPdfToPpt();
+    else if(t.id==='pdf2pdfa') await doPdfToPdfA();
+    else if(t.id==='word2pdf') await doWordToPdf();
+    else if(t.id==='excel2pdf') await doExcelToPdf();
+    else if(t.id==='ppt2pdf') await doPptToPdf();
+    else if(t.id==='url2pdf') await doHtmlToPdf();
+  }catch(err){
+    console.error(err);
+    setStatus('حدث خطأ: ' + (err.message || 'تعذّرت معالجة الملف، تأكد أن الملف صالح'));
+    btn.disabled = false;
+  }
+}
+
+/* ================= PDF-lib powered operations ================= */
+async function doMerge(){
+  const out = await PDFDocument.create();
+  for(const file of currentFiles){
+    const bytes = await readAsArrayBuffer(file);
+    const src = await PDFDocument.load(bytes, {ignoreEncryption:true});
+    const pages = await out.copyPages(src, src.getPageIndices());
+    pages.forEach(p=>out.addPage(p));
+  }
+  const bytes = await out.save();
+  showResult(new Blob([bytes],{type:'application/pdf'}), 'merged.pdf', `تم دمج ${currentFiles.length} ملفات في PDF واحد`);
+}
+
+async function doSplit(){
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const src = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  const zip = new JSZip();
+  const n = src.getPageCount();
+  for(let i=0;i<n;i++){
+    const out = await PDFDocument.create();
+    const [p] = await out.copyPages(src, [i]);
+    out.addPage(p);
+    const b = await out.save();
+    zip.file(`page-${i+1}.pdf`, b);
+    setProgress(10 + Math.round(80*(i+1)/n));
+  }
+  const zipBlob = await zip.generateAsync({type:'blob'});
+  showResult(zipBlob, 'split-pages.zip', `تم تقسيم الملف إلى ${n} صفحة داخل ملف ZIP`);
+}
+
+async function doCompress(){
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const src = await PDFDocument.load(bytes, {ignoreEncryption:true, updateMetadata:false});
+  const out = await src.save({useObjectStreams:true});
+  const before = bytes.byteLength, after = out.byteLength;
+  const pct = before>0 ? Math.max(0, Math.round((1-after/before)*100)) : 0;
+  showResult(new Blob([out],{type:'application/pdf'}), 'compressed.pdf', `الحجم الأصلي ${humanSize(before)} ← بعد الضغط ${humanSize(after)} (${pct}% أقل تقريبًا)`);
+}
+
+async function doRotate(){
+  const angle = parseInt(document.querySelector('#rotSeg .active').dataset.v);
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  doc.getPages().forEach(p=>{
+    const cur = p.getRotation().angle;
+    p.setRotation(degrees((cur+angle)%360));
+  });
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'rotated.pdf', `تم تدوير جميع الصفحات ${angle}°`);
+}
+
+async function doRepair(){
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true, throwOnInvalidObject:false});
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'repaired.pdf', 'تمت إعادة بناء الملف بنجاح');
+}
+
+async function doInsert(){
+  if(currentFiles.length < 2) throw new Error('يلزم ملفان: الملف الأساسي وملف الصفحات المراد إدراجها');
+  const insertAt = parseInt(document.getElementById('insertAt').value) || 0;
+  const baseBytes = await readAsArrayBuffer(currentFiles[0]);
+  const insertBytes = await readAsArrayBuffer(currentFiles[1]);
+  const base = await PDFDocument.load(baseBytes, {ignoreEncryption:true});
+  const insertDoc = await PDFDocument.load(insertBytes, {ignoreEncryption:true});
+  const insertedPages = await base.copyPages(insertDoc, insertDoc.getPageIndices());
+  let idx = Math.min(insertAt, base.getPageCount());
+  insertedPages.forEach((p,i)=>{ base.insertPage(idx+i, p); });
+  const out = await base.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'inserted.pdf', `تم إدراج ${insertedPages.length} صفحة بعد الصفحة ${insertAt}`);
+}
+
+async function doWatermark(){
+  const text = document.getElementById('wmText').value || 'محوّل';
+  const size = parseInt(document.getElementById('wmSize').value) || 48;
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  doc.getPages().forEach(p=>{
+    const {width, height} = p.getSize();
+    p.drawText(text, {
+      x: width/2 - (text.length*size)/4,
+      y: height/2,
+      size, font,
+      color: rgb(0.6,0.6,0.6),
+      opacity: 0.3,
+      rotate: degrees(45),
+    });
+  });
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'watermarked.pdf', 'تمت إضافة العلامة المائية لجميع الصفحات');
+}
+
+async function doPageNumbers(){
+  const pos = document.querySelector('#posSeg .active').dataset.v;
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const pages = doc.getPages();
+  pages.forEach((p,i)=>{
+    const {width} = p.getSize();
+    const label = `${i+1} / ${pages.length}`;
+    let x = width/2 - 15;
+    if(pos==='bottom-right') x = width - 60;
+    if(pos==='bottom-left') x = 30;
+    p.drawText(label, {x, y:20, size:11, font, color:rgb(0.2,0.2,0.2)});
+  });
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'numbered.pdf', `تم ترقيم ${pages.length} صفحة`);
+}
+
+async function doCrop(){
+  const pct = parseInt(document.getElementById('cropPct').value) || 0;
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  doc.getPages().forEach(p=>{
+    const {width, height} = p.getSize();
+    const dx = width*(pct/100), dy = height*(pct/100);
+    p.setCropBox(dx, dy, width-2*dx, height-2*dy);
+  });
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'cropped.pdf', `تم قص ${pct}% من هوامش كل صفحة`);
+}
+
+async function doSplitRange(){
+  const splitAt = parseInt(document.getElementById('splitAt').value);
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const src = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  const n = src.getPageCount();
+  if(splitAt<1 || splitAt>=n) throw new Error(`رقم الصفحة يجب أن يكون بين 1 و ${n-1}`);
+  const zip = new JSZip();
+  const part1 = await PDFDocument.create();
+  (await part1.copyPages(src, [...Array(splitAt).keys()])).forEach(p=>part1.addPage(p));
+  zip.file('part-1.pdf', await part1.save());
+  const part2 = await PDFDocument.create();
+  const rest = [...Array(n).keys()].slice(splitAt);
+  (await part2.copyPages(src, rest)).forEach(p=>part2.addPage(p));
+  zip.file('part-2.pdf', await part2.save());
+  const zipBlob = await zip.generateAsync({type:'blob'});
+  showResult(zipBlob, 'split-range.zip', `تم التقسيم إلى جزأين عند الصفحة ${splitAt}`);
+}
+
+async function doExtract(){
+  const rangeStr = document.getElementById('extractPages').value.trim();
+  if(!rangeStr) throw new Error('أدخل أرقام الصفحات المطلوبة');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const src = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  const n = src.getPageCount();
+  const pageNums = parsePageRanges(rangeStr, n);
+  if(pageNums.length===0) throw new Error('لم يتم العثور على صفحات صالحة ضمن هذا النطاق');
+  const out = await PDFDocument.create();
+  const idxs = pageNums.map(p=>p-1);
+  (await out.copyPages(src, idxs)).forEach(p=>out.addPage(p));
+  const outBytes = await out.save();
+  showResult(new Blob([outBytes],{type:'application/pdf'}), 'extracted.pdf', `تم استخراج ${pageNums.length} صفحة: ${pageNums.join(', ')}`);
+}
+
+async function doImagesToPdf(){
+  ensureLib(window.jspdf, 'jsPDF');
+  const { jsPDF } = window.jspdf;
+  let pdf = null;
+  for(let i=0;i<currentFiles.length;i++){
+    const file = currentFiles[i];
+    const dataUrl = await new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = ()=>res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+    const img = await new Promise((res,rej)=>{
+      const im = new Image();
+      im.onload = ()=>res(im);
+      im.onerror = rej;
+      im.src = dataUrl;
+    });
+    const orientation = img.width > img.height ? 'l' : 'p';
+    if(!pdf){
+      pdf = new jsPDF({orientation, unit:'px', format:[img.width, img.height]});
+    } else {
+      pdf.addPage([img.width, img.height], orientation);
+    }
+    pdf.addImage(dataUrl, 'JPEG', 0, 0, img.width, img.height);
+    setProgress(10 + Math.round(80*(i+1)/currentFiles.length));
+  }
+  const blob = pdf.output('blob');
+  showResult(blob, 'images.pdf', `تم تحويل ${currentFiles.length} صورة إلى ملف PDF واحد`);
+}
+
+async function doPdfToImages(){
+  ensureLib(window.pdfjsLib, 'pdf.js');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await pdfjsLib.getDocument({data: bytes}).promise;
+  const zip = new JSZip();
+  for(let i=1;i<=doc.numPages;i++){
+    const page = await doc.getPage(i);
+    const viewport = page.getViewport({scale: 2});
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext: ctx, viewport}).promise;
+    const blob = await new Promise(res=>canvas.toBlob(res, 'image/png'));
+    zip.file(`page-${i}.png`, blob);
+    setProgress(10 + Math.round(80*i/doc.numPages));
+  }
+  const zipBlob = await zip.generateAsync({type:'blob'});
+  showResult(zipBlob, 'pdf-images.zip', `تم تحويل ${doc.numPages} صفحة إلى صور PNG`);
+}
+
+/* ================= document conversion operations ================= */
+
+async function doPdfToWord(){
+  ensureLib(window.pdfjsLib, 'pdf.js');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await pdfjsLib.getDocument({data: bytes}).promise;
+  let bodyHtml = '';
+  for(let i=1;i<=doc.numPages;i++){
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const lines = groupTextIntoLines(content.items);
+    bodyHtml += lines.map(l=>`<p>${escapeHtml(l)}</p>`).join('');
+    if(i<doc.numPages) bodyHtml += '<br clear="all" style="page-break-before:always">';
+    setProgress(10 + Math.round(80*i/doc.numPages));
+  }
+  const html = buildWordHtml(bodyHtml || '<p>(لم يتم العثور على نص قابل للاستخراج)</p>');
+  const blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  showResult(blob, 'converted.doc', `تم استخراج نص ${doc.numPages} صفحة وتحويله إلى مستند Word`);
+}
+
+async function doPdfToExcel(){
+  ensureLib(window.pdfjsLib, 'pdf.js');
+  ensureLib(window.XLSX, 'xlsx');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await pdfjsLib.getDocument({data: bytes}).promise;
+  const wb = XLSX.utils.book_new();
+  for(let i=1;i<=doc.numPages;i++){
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const lines = groupTextIntoLines(content.items);
+    const rows = lines.length ? lines.map(l=>l.split(/\s{2,}|\t/).filter(Boolean)) : [['(لا يوجد نص)']];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, `صفحة ${i}`.slice(0,31));
+    setProgress(10 + Math.round(80*i/doc.numPages));
+  }
+  const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  showResult(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'converted.xlsx', `تم استخراج نص ${doc.numPages} صفحة إلى Excel`);
+}
+
+async function doPdfToPpt(){
+  ensureLib(window.pdfjsLib, 'pdf.js');
+  ensureLib(window.PptxGenJS, 'PptxGenJS');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await pdfjsLib.getDocument({data: bytes}).promise;
+  const pptx = new PptxGenJS();
+  for(let i=1;i<=doc.numPages;i++){
+    const page = await doc.getPage(i);
+    const viewport = page.getViewport({scale: 2});
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext: ctx, viewport}).promise;
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const slide = pptx.addSlide();
+    const ratio = viewport.width/viewport.height;
+    let w = 10, h = 10/ratio;
+    if(h > 7.5){ h = 7.5; w = 7.5*ratio; }
+    slide.addImage({data:dataUrl, x:(10-w)/2, y:(7.5-h)/2, w, h});
+    setProgress(10 + Math.round(80*i/doc.numPages));
+  }
+  const blob = await pptx.write({outputType:'blob'});
+  showResult(blob, 'converted.pptx', `تم تحويل ${doc.numPages} صفحة إلى عرض تقديمي (كل صفحة كصورة داخل شريحة)`);
+}
+
+async function doPdfToPdfA(){
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+  doc.setProducer('Xform PDF/A Converter');
+  doc.setCreator('Xform');
+  doc.setSubject('PDF/A-1b (best-effort metadata)');
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'pdfa-basic.pdf', 'تمت إضافة بيانات وصفية متوافقة مع PDF/A بشكل مبسّط');
+}
+
+async function doWordToPdf(){
+  ensureLib(window.mammoth, 'mammoth');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const result = await mammoth.convertToHtml({arrayBuffer: bytes});
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:750px;background:#fff;color:#111;padding:40px;font-family:Arial,sans-serif;line-height:1.6;direction:rtl;';
+  container.innerHTML = result.value || '<p>(مستند فارغ)</p>';
+  const blob = await renderHtmlContainerToPdf(container);
+  showResult(blob, 'converted.pdf', 'تم تحويل مستند Word إلى PDF');
+}
+
+async function doExcelToPdf(){
+  ensureLib(window.XLSX, 'xlsx');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const wb = XLSX.read(bytes, {type:'array'});
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;background:#fff;color:#111;padding:30px;font-family:Arial,sans-serif;direction:ltr;';
+  wb.SheetNames.forEach(name=>{
+    const h = document.createElement('h3');
+    h.textContent = name;
+    h.style.cssText = 'font-family:Arial;margin:18px 0 8px;';
+    container.appendChild(h);
+    const wrap = document.createElement('div');
+    wrap.innerHTML = XLSX.utils.sheet_to_html(wb.Sheets[name]);
+    wrap.querySelectorAll('table').forEach(tb=>{
+      tb.style.cssText = 'border-collapse:collapse;width:100%;font-size:12px;';
+      tb.querySelectorAll('td,th').forEach(c=>{ c.style.cssText = 'border:1px solid #999;padding:4px 8px;'; });
+    });
+    container.appendChild(wrap);
+  });
+  const blob = await renderHtmlContainerToPdf(container);
+  showResult(blob, 'converted.pdf', `تم تحويل ${wb.SheetNames.length} ورقة عمل إلى PDF`);
+}
+
+async function doPptToPdf(){
+  ensureLib(window.JSZip, 'JSZip');
+  const bytes = await readAsArrayBuffer(currentFiles[0]);
+  const zip = await JSZip.loadAsync(bytes);
+  const slideFiles = Object.keys(zip.files)
+    .filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n))
+    .sort((a,b)=>{
+      const na = parseInt(a.match(/slide(\d+)\.xml/)[1]);
+      const nb = parseInt(b.match(/slide(\d+)\.xml/)[1]);
+      return na-nb;
+    });
+  if(slideFiles.length===0) throw new Error('لم يتم العثور على شرائح داخل الملف، تأكد أنه ملف PowerPoint صالح (.pptx)');
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  for(let i=0;i<slideFiles.length;i++){
+    const xml = await zip.file(slideFiles[i]).async('text');
+    const texts = Array.from(xml.matchAll(/<a:t>(.*?)<\/a:t>/g)).map(m=>decodeXmlEntities(m[1])).filter(Boolean);
+    const page = doc.addPage([612,792]);
+    let y = 740;
+    page.drawText(`شريحة ${i+1}`, {x:50, y, size:16, font, color:rgb(0.2,0.2,0.2)});
+    y -= 34;
+    if(texts.length===0){
+      page.drawText('(لا يوجد نص في هذه الشريحة)', {x:50, y, size:12, font, color:rgb(0.5,0.5,0.5)});
+    }
+    texts.forEach(t=>{
+      wrapText(t, 70).forEach(line=>{
+        if(y<40) return;
+        page.drawText(line, {x:50, y, size:12, font, color:rgb(0,0,0)});
+        y -= 18;
+      });
+      y -= 6;
+    });
+    setProgress(10 + Math.round(80*(i+1)/slideFiles.length));
+  }
+  const out = await doc.save();
+  showResult(new Blob([out],{type:'application/pdf'}), 'converted.pdf', `تم استخراج نص ${slideFiles.length} شريحة إلى PDF`);
+}
+
+async function doHtmlToPdf(){
+  const file = currentFiles[0];
+  const text = await file.text();
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:750px;background:#fff;color:#111;padding:30px;font-family:Arial,sans-serif;';
+  if(/\.html?$/i.test(file.name)){
+    container.innerHTML = text;
+  } else {
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'white-space:pre-wrap;font-family:Arial,sans-serif;';
+    pre.textContent = text;
+    container.appendChild(pre);
+  }
+  const blob = await renderHtmlContainerToPdf(container);
+  showResult(blob, 'converted.pdf', 'تم تحويل الملف إلى PDF');
+}
+</script>
+</body>
+</html>
