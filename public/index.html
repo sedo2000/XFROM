@@ -1143,6 +1143,28 @@ async function doHtmlToPdf(){
   const blob = await renderHtmlContainerToPdf(container);
   showResult(blob, 'converted.pdf', 'تم تحويل الملف إلى PDF');
 }
+  // ابحث عن الـ input الخاص بالملفات في كودك واربطه بالحدث
+document.querySelector('#fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0]; // جلب الملف الذي اخترته
+
+    if (file) {
+        const formData = new FormData();
+        formData.append('uploadedFile', file); 
+
+        fetch('/api/upload', {
+            method: 'POST',
+            body: formData 
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log("تم الرفع بنجاح، رد السيرفر:", data);
+        })
+        .catch(err => {
+            console.error("حدث خطأ أثناء الرفع:", err);
+        });
+    }
+});
+
 </script>
 </body>
 </html>
