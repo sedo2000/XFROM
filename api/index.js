@@ -3,14 +3,24 @@
 // يستقبل تحديثات تلجرام (رسائل + أزرار Inline) ويدير قوائم التنقل ومعالجة الملفات.
 //
 // متغيرات البيئة المطلوبة (تُضبط من إعدادات المشروع في Vercel):
-//   BOT_TOKEN         -> توكن البوت من BotFather
-//   DEV_ID            -> آيدي حساب المطوّر على تلجرام (لإشعارات الأخطاء)
-//   WEBHOOK_SECRET     -> (اختياري) سر تحقق من صحة طلبات تلجرام
+//   BOT_TOKEN          -> توكن البوت من BotFather
+//   DEV_ID             -> آيدي حساب المطوّر على تلجرام (لإشعارات الأخطاء)
+//   WEBHOOK_SECRET      -> (اختياري) سر تحقق من صحة طلبات تلجرام
+//   ADMIN_IDS          -> معرفات تلجرام لحسابات الإدمن، مفصولة بفواصل
+//   WEBAPP_URL         -> رابط https للتطبيق المصغر (Mini App) لزر "افتح تطبيق الويب"
+//   CLOUDCONVERT_API_KEY -> مفتاح CloudConvert (لأدوات التحويل بين Office و PDF والصور)
+//   KV_REST_API_URL / KV_REST_API_TOKEN -> بيانات اتصال Vercel KV (لوحة الإدمن)
+//
+// راجع ملف SETUP.md المرفق لتفاصيل الإعداد والتثبيت.
 
 const U = require('./upload.js');
+const D = require('./db.js');
+const A = require('./admin.js');
+const C = require('./converters.js');
 
 const DEV_ID = process.env.DEV_ID;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+const WEBAPP_URL = process.env.WEBAPP_URL;
 
 /* ================= تعريف الأدوات ================= */
 
@@ -34,34 +44,48 @@ const TOOLS = [
     options: [{ key: 'range', type: 'text', prompt: 'أرسل أرقام الصفحات (مثال: 1,3,5-8):', validate: (s) => (s && s.trim()) ? { ok: true, value: s.trim() } : { ok: false, error: 'أدخل نطاق صفحات صالح' } }] },
 
   { id: 'img2pdf', cat: 'image', name: 'صور إلى PDF', emoji: '📸', desc: 'حوّل صورة أو أكثر إلى ملف PDF واحد بالترتيب.', multi: true, accept: 'image', status: 'ready' },
-  { id: 'pdf2img', cat: 'image', name: 'PDF إلى صور', emoji: '🖼️', desc: 'تحويل صفحات PDF إلى صور PNG.', status: 'soon' },
+  { id: 'pdf2img', cat: 'image', name: 'PDF إلى صور', emoji: '🖼️', desc: 'تحويل صفحات PDF إلى صور PNG (عبر CloudConvert).', accept: 'pdf', status: 'ready' },
   { id: 'scan2pdf', cat: 'image', name: 'صور ممسوحة ضوئيًا إلى PDF', emoji: '📠', desc: 'حوّل صور المستندات الممسوحة ضوئيًا إلى ملف PDF مرتب.', multi: true, accept: 'image', status: 'ready' },
 
-  { id: 'pdf2word', cat: 'doc', name: 'PDF إلى Word', emoji: '📝', desc: 'تحويل ملف PDF إلى مستند Word قابل للتحرير.', status: 'soon' },
-  { id: 'pdf2excel', cat: 'doc', name: 'PDF إلى Excel', emoji: '📊', desc: 'استخراج الجداول من PDF إلى ملف Excel.', status: 'soon' },
-  { id: 'pdf2ppt', cat: 'doc', name: 'PDF إلى PowerPoint', emoji: '📽️', desc: 'تحويل صفحات PDF إلى عرض تقديمي.', status: 'soon' },
-  { id: 'pdf2pdfa', cat: 'doc', name: 'PDF إلى PDF/A', emoji: '📄', desc: 'تحويل الملف إلى صيغة الأرشفة طويلة الأمد PDF/A.', status: 'soon' },
-  { id: 'word2pdf', cat: 'doc', name: 'Word إلى PDF', emoji: '📝', desc: 'تحويل مستند Word إلى ملف PDF.', status: 'soon' },
-  { id: 'excel2pdf', cat: 'doc', name: 'Excel إلى PDF', emoji: '📊', desc: 'تحويل جدول Excel إلى ملف PDF.', status: 'soon' },
-  { id: 'ppt2pdf', cat: 'doc', name: 'PowerPoint إلى PDF', emoji: '📽️', desc: 'تحويل عرض تقديمي إلى ملف PDF.', status: 'soon' },
-  { id: 'url2pdf', cat: 'doc', name: 'URL/HTML إلى PDF', emoji: '🌐', desc: 'تحويل صفحة ويب إلى ملف PDF.', status: 'soon' },
+  { id: 'pdf2word', cat: 'doc', name: 'PDF إلى Word', emoji: '📝', desc: 'تحويل ملف PDF إلى مستند Word قابل للتحرير (عبر CloudConvert).', accept: 'pdf', status: 'ready' },
+  { id: 'pdf2excel', cat: 'doc', name: 'PDF إلى Excel', emoji: '📊', desc: 'استخراج الجداول من PDF إلى ملف Excel (عبر CloudConvert).', accept: 'pdf', status: 'ready' },
+  { id: 'pdf2ppt', cat: 'doc', name: 'PDF إلى PowerPoint', emoji: '📽️', desc: 'تحويل صفحات PDF إلى عرض تقديمي (عبر CloudConvert).', accept: 'pdf', status: 'ready' },
+  { id: 'pdf2pdfa', cat: 'doc', name: 'PDF إلى PDF/A', emoji: '📄', desc: 'تحويل الملف إلى صيغة الأرشفة طويلة الأمد PDF/A (عبر CloudConvert).', accept: 'pdf', status: 'ready' },
+  { id: 'word2pdf', cat: 'doc', name: 'Word إلى PDF', emoji: '📝', desc: 'تحويل مستند Word إلى ملف PDF (عبر CloudConvert).', accept: 'docx', status: 'ready' },
+  { id: 'excel2pdf', cat: 'doc', name: 'Excel إلى PDF', emoji: '📊', desc: 'تحويل جدول Excel إلى ملف PDF (عبر CloudConvert).', accept: 'xlsx', status: 'ready' },
+  { id: 'ppt2pdf', cat: 'doc', name: 'PowerPoint إلى PDF', emoji: '📽️', desc: 'تحويل عرض تقديمي إلى ملف PDF (عبر CloudConvert).', accept: 'pptx', status: 'ready' },
+  { id: 'url2pdf', cat: 'doc', name: 'URL/HTML إلى PDF', emoji: '🌐', desc: 'تحويل صفحة ويب إلى ملف PDF (عبر CloudConvert).', status: 'ready', custom: 'urlinput' },
 ];
 
 const CAT_LABEL = { pdf: '📄 عمليات PDF', image: '🖼️ عمليات الصور', doc: '📝 تحويل المستندات' };
 
-// تخزين الجلسات في الذاكرة (لكل chatId) — يصلح لبوت متوسط الاستخدام.
+// امتدادات/أنواع MIME لأدوات Office المضافة حديثًا
+const OFFICE_MIME = {
+  docx: ['wordprocessingml', '.docx', '.doc'],
+  xlsx: ['spreadsheetml', '.xlsx', '.xls'],
+  pptx: ['presentationml', '.pptx', '.ppt'],
+};
+
+// تخزين جلسات معالجة الأدوات في الذاكرة (لكل chatId) — يصلح لبوت متوسط الاستخدام.
 // ملاحظة: على Vercel قد يُعاد تشغيل الدالة بين الطلبات، لذا للاستخدام الإنتاجي الثقيل
 // يُفضّل استبدال هذا الكائن بتخزين خارجي مثل Vercel KV أو Redis.
+// (بيانات لوحة الإدمن نفسها أصبحت الآن في Vercel KV عبر db.js وليست في هذا الكائن.)
 const sessions = new Map();
 
 /* ================= لوحات المفاتيح ================= */
 
-function mainMenuKeyboard() {
-  return [
-    [{ text: CAT_LABEL.pdf, callback_data: 'menu:pdf' }],
-    [{ text: CAT_LABEL.image, callback_data: 'menu:image' }],
-    [{ text: CAT_LABEL.doc, callback_data: 'menu:doc' }],
-  ];
+async function mainMenuKeyboard(chatId) {
+  const rows = [];
+  if (WEBAPP_URL) {
+    rows.push([{ text: '🌐 افتح تطبيق الويب', web_app: { url: WEBAPP_URL } }]);
+  }
+  rows.push([{ text: CAT_LABEL.pdf, callback_data: 'menu:pdf' }]);
+  rows.push([{ text: CAT_LABEL.image, callback_data: 'menu:image' }]);
+  rows.push([{ text: CAT_LABEL.doc, callback_data: 'menu:doc' }]);
+  if (A.isAdmin(chatId)) {
+    rows.push([{ text: '🛠️ لوحة الإدمن', callback_data: 'admin:main' }]);
+  }
+  return rows;
 }
 
 function backRow(cat) {
@@ -93,7 +117,11 @@ function simpleBackKeyboard(cat) {
 
 /* ================= بناء نصوص القوائم ================= */
 
-const MAIN_TEXT = '👋 أهلًا بك في <b>Xform Bot</b>\nاختر التصنيف الذي تريد العمل عليه:';
+async function mainText() {
+  const custom = await D.getContent('welcome_text', '');
+  if (custom && custom.trim()) return custom;
+  return '👋 أهلًا بك في <b>Xform Bot</b>\nاختر التصنيف الذي تريد العمل عليه:';
+}
 
 function categoryText(cat) {
   return `${CAT_LABEL[cat]}\nاختر الأداة المطلوبة:`;
@@ -134,12 +162,17 @@ function computeStep(tool, session) {
     if (session.stage === 'await_insert_pos') return { text: '🔢 أرسل رقم الصفحة التي تريد الإدراج بعدها (0 = في البداية):', keyboard: simpleBackKeyboard(tool.cat) };
   }
 
+  if (tool.custom === 'urlinput') {
+    if (session.stage === 'await_url') return { text: `${tool.emoji} <b>${tool.name}</b>\n\n🔗 أرسل رابط الصفحة (يبدأ بـ http:// أو https://):`, keyboard: simpleBackKeyboard(tool.cat) };
+  }
+
   if (session.stage === 'await_more_files') {
     return { text: `${tool.emoji} <b>${tool.name}</b>\n\nتمت إضافة ${session.files.length} ملف حتى الآن.\nأرسل ملفًا آخر، أو اضغط "تم" للمتابعة.`, keyboard: finishFilesKeyboard(tool.cat) };
   }
 
   if (session.stage === 'await_file') {
-    const kind = tool.accept === 'image' ? 'صورة' : 'ملف PDF';
+    const kindMap = { image: 'صورة', docx: 'ملف Word', xlsx: 'ملف Excel', pptx: 'ملف PowerPoint' };
+    const kind = kindMap[tool.accept] || 'ملف PDF';
     return { text: `${tool.emoji} <b>${tool.name}</b>\n\n📥 أرسل ${kind} للمعالجة:`, keyboard: simpleBackKeyboard(tool.cat) };
   }
 
@@ -153,6 +186,10 @@ function advance(tool, session) {
     if (!session.stage) { session.stage = 'await_base'; return; }
     if (session.stage === 'await_base_done') { session.stage = 'await_insert_file'; return; }
     if (session.stage === 'await_insert_file_done') { session.stage = 'await_insert_pos'; return; }
+    return;
+  }
+  if (tool.custom === 'urlinput') {
+    if (!session.stage) { session.stage = 'await_url'; return; }
     return;
   }
   if (session.optionQueue.length > 0) {
@@ -226,13 +263,32 @@ async function runTool(chatId, tool, session) {
       case 'scan2pdf':
         result = await U.imagesToPdf(session.files.map(f => f.buffer), session.files.map(f => f.mime));
         break;
+
+      // ===== أدوات مضافة عبر CloudConvert =====
+      case 'pdf2word':
+      case 'pdf2excel':
+      case 'pdf2ppt':
+      case 'pdf2pdfa':
+      case 'word2pdf':
+      case 'excel2pdf':
+      case 'ppt2pdf':
+      case 'pdf2img': {
+        const map = C.CONVERT_MAP[tool.id];
+        const srcName = `input.${map.input}`;
+        result = await C.convertFileViaCloudConvert(session.files[0].buffer, srcName, map.input, map.output, map.extra || {});
+        break;
+      }
+      case 'url2pdf':
+        result = await C.urlToPdfViaCloudConvert(session.url);
+        break;
+
       default:
         throw new Error('أداة غير معروفة');
     }
     await U.sendDocumentBuffer(chatId, result.buffer, result.filename, result.note);
-    await U.sendMessage(chatId, '✅ تم بنجاح! ماذا تريد أن تفعل الآن؟', mainMenuKeyboard());
+    await U.sendMessage(chatId, '✅ تم بنجاح! ماذا تريد أن تفعل الآن؟', await mainMenuKeyboard(chatId));
   } catch (err) {
-    await U.sendMessage(chatId, `⚠️ حدث خطأ أثناء المعالجة:\n${err.message}`, mainMenuKeyboard());
+    await U.sendMessage(chatId, `⚠️ حدث خطأ أثناء المعالجة:\n${err.message}`, await mainMenuKeyboard(chatId));
     await notifyDeveloper(`خطأ في تنفيذ "${tool.id}" للمستخدم ${chatId}:\n${err.stack || err}`);
   }
   resetSession(chatId);
@@ -243,7 +299,28 @@ async function notifyDeveloper(text) {
   try { await U.sendMessage(DEV_ID, `🛑 <b>تنبيه بوت Xform</b>\n${text}`.slice(0, 3900)); } catch (_) { /* ignore */ }
 }
 
+async function notifyAdminsNewUser(user) {
+  const enabled = await D.getSetting('notify_admin_on_join', true);
+  if (!enabled) return;
+  const ids = String(process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  const text = `👤 مستخدم جديد دخل البوت:\n${user.first_name || ''} ${user.last_name || ''}\n@${user.username || '—'}\nID: <code>${user.id}</code>`;
+  for (const id of ids) {
+    try { await U.sendMessage(id, text); } catch (_) { /* ignore */ }
+  }
+}
+
 /* ================= استقبال الملفات والنصوص ================= */
+
+function fileMatchesAccept(accept, mime, fileName) {
+  const m = (mime || '').toLowerCase();
+  const n = (fileName || '').toLowerCase();
+  if (accept === 'pdf') return m.includes('pdf') || n.endsWith('.pdf');
+  if (accept === 'image') return m.includes('image');
+  if (OFFICE_MIME[accept]) {
+    return OFFICE_MIME[accept].some(sig => m.includes(sig) || n.endsWith(sig));
+  }
+  return false;
+}
 
 async function handleIncomingFile(chatId, tool, session, fileId, mime) {
   let buffer;
@@ -286,6 +363,17 @@ async function handleIncomingFile(chatId, tool, session, fileId, mime) {
 }
 
 async function handleIncomingText(chatId, tool, session, text) {
+  if (tool.custom === 'urlinput' && session.stage === 'await_url') {
+    const url = text.trim();
+    if (!/^https?:\/\/.+/i.test(url)) {
+      await U.sendMessage(chatId, '⚠️ أرسل رابطًا صحيحًا يبدأ بـ http:// أو https://', simpleBackKeyboard(tool.cat));
+      return true;
+    }
+    session.url = url;
+    await runTool(chatId, tool, session);
+    return true;
+  }
+
   if (session.stage !== 'await_option') return false;
   const opt = tool.options.find(o => o.key === session.currentOptionKey);
   if (!opt || opt.type !== 'text') return false;
@@ -304,6 +392,36 @@ async function handleIncomingText(chatId, tool, session, text) {
 /* ================= معالجة تحديثات تلجرام ================= */
 
 async function processUpdate(update) {
+  // ===== تتبع المستخدم + وضع الصيانة + الحظر (لكل من الرسائل والأزرار) =====
+  const tgUser = update.callback_query ? update.callback_query.from : (update.message ? update.message.from : null);
+  const chatIdForCheck = update.callback_query ? update.callback_query.message.chat.id : (update.message ? update.message.chat.id : null);
+
+  if (tgUser && chatIdForCheck) {
+    const { isNew } = await D.upsertUser(tgUser);
+    if (isNew) await notifyAdminsNewUser(tgUser);
+
+    const banned = await D.isBanned(tgUser.id);
+    if (banned) {
+      if (update.callback_query) await U.answerCallback(update.callback_query.id, '⛔ أنت محظور من استخدام هذا البوت');
+      else await U.sendMessage(chatIdForCheck, '⛔ أنت محظور من استخدام هذا البوت.');
+      return;
+    }
+
+    const maintenance = await D.getSetting('maintenance_mode', false);
+    if (maintenance && !A.isAdmin(tgUser.id)) {
+      const msg = '🚧 البوت في وضع الصيانة حاليًا، حاول لاحقًا.';
+      if (update.callback_query) await U.answerCallback(update.callback_query.id, msg);
+      else await U.sendMessage(chatIdForCheck, msg);
+      return;
+    }
+  }
+
+  // ===== أزرار لوحة الإدمن =====
+  if (update.callback_query && (update.callback_query.data || '').startsWith('admin:')) {
+    await A.handleAdminCallback(update.callback_query);
+    return;
+  }
+
   if (update.callback_query) {
     const cq = update.callback_query;
     const chatId = cq.message.chat.id;
@@ -312,7 +430,7 @@ async function processUpdate(update) {
 
     if (data === 'menu:main') {
       resetSession(chatId);
-      await U.editMessage(chatId, messageId, MAIN_TEXT, mainMenuKeyboard());
+      await U.editMessage(chatId, messageId, await mainText(), await mainMenuKeyboard(chatId));
       await U.answerCallback(cq.id);
       return;
     }
@@ -371,8 +489,23 @@ async function processUpdate(update) {
 
     if (msg.text && msg.text.startsWith('/start')) {
       resetSession(chatId);
-      await U.sendMessage(chatId, MAIN_TEXT, mainMenuKeyboard());
+      await U.sendMessage(chatId, await mainText(), await mainMenuKeyboard(chatId));
       return;
+    }
+
+    if (msg.text && msg.text.startsWith('/admin')) {
+      if (!A.isAdmin(chatId)) {
+        await U.sendMessage(chatId, '⚠️ هذا الأمر مخصص للإدمن فقط.');
+        return;
+      }
+      await A.showAdminMain(chatId, null);
+      return;
+    }
+
+    // إن كانت هناك جلسة إدخال إدمن مفتوحة (بث، حظر، تعديل محتوى...)، أعطها الأولوية
+    if (msg.text && A.isAdmin(chatId)) {
+      const handledByAdmin = await A.handleAdminText(chatId, msg.text);
+      if (handledByAdmin) return;
     }
 
     const session = sessions.get(chatId);
@@ -386,14 +519,11 @@ async function processUpdate(update) {
     // ملف مرفق (مستند)
     if (msg.document) {
       const mime = msg.document.mime_type || '';
-      const isPdf = mime.includes('pdf') || (msg.document.file_name || '').toLowerCase().endsWith('.pdf');
-      const isImage = mime.includes('image');
-      if (tool.accept === 'pdf' && !isPdf) {
-        await U.sendMessage(chatId, '⚠️ الرجاء إرسال ملف PDF فقط.', simpleBackKeyboard(tool.cat));
-        return;
-      }
-      if (tool.accept === 'image' && !isImage) {
-        await U.sendMessage(chatId, '⚠️ الرجاء إرسال صورة فقط.', simpleBackKeyboard(tool.cat));
+      const fileName = msg.document.file_name || '';
+      if (!fileMatchesAccept(tool.accept, mime, fileName)) {
+        const kindMap = { image: 'صورة', docx: 'ملف Word (.docx)', xlsx: 'ملف Excel (.xlsx)', pptx: 'ملف PowerPoint (.pptx)' };
+        const kind = kindMap[tool.accept] || 'ملف PDF';
+        await U.sendMessage(chatId, `⚠️ الرجاء إرسال ${kind} فقط.`, simpleBackKeyboard(tool.cat));
         return;
       }
       await handleIncomingFile(chatId, tool, session, msg.document.file_id, mime);
@@ -403,7 +533,7 @@ async function processUpdate(update) {
     // صورة مرسلة كصورة تلجرام عادية
     if (msg.photo && msg.photo.length) {
       if (tool.accept !== 'image') {
-        await U.sendMessage(chatId, '⚠️ هذه الأداة تحتاج ملف PDF وليس صورة.', simpleBackKeyboard(tool.cat));
+        await U.sendMessage(chatId, '⚠️ هذه الأداة تحتاج ملف مختلف وليس صورة.', simpleBackKeyboard(tool.cat));
         return;
       }
       const best = msg.photo[msg.photo.length - 1];
@@ -411,7 +541,7 @@ async function processUpdate(update) {
       return;
     }
 
-    // نص (إجابة على سؤال إعداد)
+    // نص (إجابة على سؤال إعداد أو رابط لأداة URL إلى PDF)
     if (msg.text) {
       const handled = await handleIncomingText(chatId, tool, session, msg.text);
       if (!handled) {
