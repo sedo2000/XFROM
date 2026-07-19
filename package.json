@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
-    "telegraf": "^4.16.3"
+    "jszip": "^3.10.1",
+    "@vercel/kv": "^2.0.0",
+    "cloudconvert": "^2.3.1"
   },
   "engines": {
     "node": "24.x"
