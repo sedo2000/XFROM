@@ -553,6 +553,7 @@ async function processUpdate(update) {
 }
 
 /* ================= مصدّر الدالة (Vercel Serverless Function) ================= */
+/* ================= مصدّر الدالة (Vercel Serverless Function) ================= */
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -570,10 +571,14 @@ module.exports = async (req, res) => {
 
   try {
     let body = req.body;
-    if (body && Buffer.isBuffer(body)) {
-      body = JSON.parse(body.toString('utf-8'));
-    } else if (typeof body === 'string') {
-      body = JSON.parse(body);
+    
+    // حماية قراءة البيانات ومنع الانهيار الفوري في بيئة Vercel
+    if (body) {
+      if (Buffer.isBuffer(body)) {
+        body = JSON.parse(body.toString('utf-8'));
+      } else if (typeof body === 'string') {
+        body = JSON.parse(body);
+      }
     }
 
     await processUpdate(body || {});
@@ -585,5 +590,6 @@ module.exports = async (req, res) => {
     }
   }
 
+  // إغلاق الاستجابة بنجاح لتنبيه سيرفرات تليجرام
   res.status(200).json({ ok: true });
 };
