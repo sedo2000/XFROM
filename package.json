@@ -1,31 +1,16 @@
 {
-  "name": "pdf-converter-bot",
+  "name": "xform-telegram-bot",
   "version": "1.0.0",
-  "description": "Telegram Bot for converting files and PDF processing, powered by Vercel and Upstash Redis.",
+  "description": "Telegram Bot for document conversion and PDF tools on Vercel Serverless",
   "main": "api/index.js",
   "scripts": {
-    "start": "node api/index.js",
-    "dev": "nodemon api/index.js"
+    "start": "node api/index.js"
   },
-  "keywords": [
-    "telegram",
-    "bot",
-    "pdf",
-    "converter",
-    "vercel",
-    "redis"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@vercel/kv": "^1.0.1",
-    "telegraf": "^4.16.3",
-    "dotenv": "^16.4.5"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.0"
+    "pdf-lib": "^1.17.1",
+    "telegraf": "^4.16.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   }
 }
