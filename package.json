@@ -1,0 +1,7 @@
+{
+  "name": "my-vercel-project",
+  "version": "1.0.0",
+  "description": "Minimal Vercel project with frontend and backend",
+  "main": "api/index.js",
+  "dependencies": {}
+}
