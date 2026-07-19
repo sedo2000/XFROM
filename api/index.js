@@ -14,9 +14,38 @@
 // راجع ملف SETUP.md المرفق لتفاصيل الإعداد والتثبيت.
 
 const U = require('./upload.js');
-const D = require('./db.js');
-const A = require('./admin.js');
-const C = require('./converters.js');
+
+// تحميل الوحدات (KV / لوحة الإدمن / CloudConvert) بأمان: إن فشل تحميل إحداها
+// (حزمة ناقصة، متغير بيئة خاطئ...) لن يُسقط البوت بالكامل بعد الآن — فقط
+// الميزة المرتبطة ستُعطَّل مؤقتًا مع رسالة واضحة في Vercel Logs، بينما تبقى
+// أدوات PDF الأساسية تعمل دائمًا لأنها لا تعتمد على db.js أو converters.js.
+let D = null;
+let A = null;
+let C = null;
+try { D = require('./db.js'); } catch (e) { console.error('⚠️ فشل تحميل db.js — لوحة الإدمن وتتبع المستخدمين معطّلة:', e.message); }
+try { A = require('./admin.js'); } catch (e) { console.error('⚠️ فشل تحميل admin.js — لوحة الإدمن معطّلة:', e.message); }
+try { C = require('./converters.js'); } catch (e) { console.error('⚠️ فشل تحميل converters.js — تحويلات CloudConvert معطّلة:', e.message); }
+
+async function safeUpsertUser(tgUser) {
+  if (!D) return { isNew: false };
+  try { return await D.upsertUser(tgUser); } catch (e) { console.error('KV upsertUser error:', e.message); return { isNew: false }; }
+}
+async function safeIsBanned(id) {
+  if (!D) return false;
+  try { return await D.isBanned(id); } catch (e) { console.error('KV isBanned error:', e.message); return false; }
+}
+async function safeGetSetting(key, def) {
+  if (!D) return def;
+  try { return await D.getSetting(key, def); } catch (e) { console.error('KV getSetting error:', e.message); return def; }
+}
+async function safeGetContent(key, def) {
+  if (!D) return def;
+  try { return await D.getContent(key, def); } catch (e) { console.error('KV getContent error:', e.message); return def; }
+}
+function safeIsAdmin(id) {
+  if (!A) return false;
+  try { return A.isAdmin(id); } catch (e) { return false; }
+}
 
 const DEV_ID = process.env.DEV_ID;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
@@ -82,7 +111,7 @@ async function mainMenuKeyboard(chatId) {
   rows.push([{ text: CAT_LABEL.pdf, callback_data: 'menu:pdf' }]);
   rows.push([{ text: CAT_LABEL.image, callback_data: 'menu:image' }]);
   rows.push([{ text: CAT_LABEL.doc, callback_data: 'menu:doc' }]);
-  if (A.isAdmin(chatId)) {
+  if (safeIsAdmin(chatId)) {
     rows.push([{ text: '🛠️ لوحة الإدمن', callback_data: 'admin:main' }]);
   }
   return rows;
@@ -118,7 +147,7 @@ function simpleBackKeyboard(cat) {
 /* ================= بناء نصوص القوائم ================= */
 
 async function mainText() {
-  const custom = await D.getContent('welcome_text', '');
+  const custom = await safeGetContent('welcome_text', '');
   if (custom && custom.trim()) return custom;
   return '👋 أهلًا بك في <b>Xform Bot</b>\nاختر التصنيف الذي تريد العمل عليه:';
 }
@@ -273,12 +302,14 @@ async function runTool(chatId, tool, session) {
       case 'excel2pdf':
       case 'ppt2pdf':
       case 'pdf2img': {
+        if (!C) throw new Error('ميزة التحويل غير مفعّلة حاليًا (تحقق من تثبيت الحزم ومتغير CLOUDCONVERT_API_KEY).');
         const map = C.CONVERT_MAP[tool.id];
         const srcName = `input.${map.input}`;
         result = await C.convertFileViaCloudConvert(session.files[0].buffer, srcName, map.input, map.output, map.extra || {});
         break;
       }
       case 'url2pdf':
+        if (!C) throw new Error('ميزة التحويل غير مفعّلة حاليًا (تحقق من تثبيت الحزم ومتغير CLOUDCONVERT_API_KEY).');
         result = await C.urlToPdfViaCloudConvert(session.url);
         break;
 
@@ -300,7 +331,7 @@ async function notifyDeveloper(text) {
 }
 
 async function notifyAdminsNewUser(user) {
-  const enabled = await D.getSetting('notify_admin_on_join', true);
+  const enabled = await safeGetSetting('notify_admin_on_join', true);
   if (!enabled) return;
   const ids = String(process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
   const text = `👤 مستخدم جديد دخل البوت:\n${user.first_name || ''} ${user.last_name || ''}\n@${user.username || '—'}\nID: <code>${user.id}</code>`;
@@ -397,18 +428,18 @@ async function processUpdate(update) {
   const chatIdForCheck = update.callback_query ? update.callback_query.message.chat.id : (update.message ? update.message.chat.id : null);
 
   if (tgUser && chatIdForCheck) {
-    const { isNew } = await D.upsertUser(tgUser);
+    const { isNew } = await safeUpsertUser(tgUser);
     if (isNew) await notifyAdminsNewUser(tgUser);
 
-    const banned = await D.isBanned(tgUser.id);
+    const banned = await safeIsBanned(tgUser.id);
     if (banned) {
       if (update.callback_query) await U.answerCallback(update.callback_query.id, '⛔ أنت محظور من استخدام هذا البوت');
       else await U.sendMessage(chatIdForCheck, '⛔ أنت محظور من استخدام هذا البوت.');
       return;
     }
 
-    const maintenance = await D.getSetting('maintenance_mode', false);
-    if (maintenance && !A.isAdmin(tgUser.id)) {
+    const maintenance = await safeGetSetting('maintenance_mode', false);
+    if (maintenance && !safeIsAdmin(tgUser.id)) {
       const msg = '🚧 البوت في وضع الصيانة حاليًا، حاول لاحقًا.';
       if (update.callback_query) await U.answerCallback(update.callback_query.id, msg);
       else await U.sendMessage(chatIdForCheck, msg);
@@ -418,6 +449,10 @@ async function processUpdate(update) {
 
   // ===== أزرار لوحة الإدمن =====
   if (update.callback_query && (update.callback_query.data || '').startsWith('admin:')) {
+    if (!A) {
+      await U.answerCallback(update.callback_query.id, '⚠️ لوحة الإدمن غير مفعّلة حاليًا (تحقق من إعداد KV)');
+      return;
+    }
     await A.handleAdminCallback(update.callback_query);
     return;
   }
@@ -494,6 +529,10 @@ async function processUpdate(update) {
     }
 
     if (msg.text && msg.text.startsWith('/admin')) {
+      if (!A) {
+        await U.sendMessage(chatId, '⚠️ لوحة الإدمن غير مفعّلة حاليًا (تحقق من إعداد KV في Vercel Logs).');
+        return;
+      }
       if (!A.isAdmin(chatId)) {
         await U.sendMessage(chatId, '⚠️ هذا الأمر مخصص للإدمن فقط.');
         return;
@@ -503,7 +542,7 @@ async function processUpdate(update) {
     }
 
     // إن كانت هناك جلسة إدخال إدمن مفتوحة (بث، حظر، تعديل محتوى...)، أعطها الأولوية
-    if (msg.text && A.isAdmin(chatId)) {
+    if (msg.text && A && A.isAdmin(chatId)) {
       const handledByAdmin = await A.handleAdminText(chatId, msg.text);
       if (handledByAdmin) return;
     }
