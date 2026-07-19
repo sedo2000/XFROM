@@ -1,11 +1,10 @@
 {
-  "name": "xfrom-project",
+  "name": "xform-bot",
   "version": "1.0.0",
-  "description": "Minimal Vercel project with frontend and backend",
-  "main": "api/webhook.js",
+  "description": "Bot for PDF and Image processing on Vercel",
   "type": "module",
+  "main": "api/webhook.js",
   "dependencies": {
-    "telegraf": "^4.16.3",
-    "dotenv": "^16.4.5"
+    "telegraf": "^4.16.3"
   }
 }
