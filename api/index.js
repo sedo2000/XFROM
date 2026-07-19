@@ -569,10 +569,20 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await processUpdate(req.body || {});
+    let body = req.body;
+    if (body && Buffer.isBuffer(body)) {
+      body = JSON.parse(body.toString('utf-8'));
+    } else if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+
+    await processUpdate(body || {});
+    
   } catch (err) {
     console.error('Update handling error:', err);
-    await notifyDeveloper(`خطأ عام في معالجة التحديث:\n${err.stack || err}`);
+    if (DEV_ID) {
+      try { await U.sendMessage(DEV_ID, `🛑 <b>خطأ عام في السيرفر:</b>\n${err.message}`); } catch(_) {}
+    }
   }
 
   res.status(200).json({ ok: true });
