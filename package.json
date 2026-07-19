@@ -1,10 +1,14 @@
 {
-  "name": "xform-bot",
+  "name": "xform-telegram-bot",
   "version": "1.0.0",
-  "description": "Bot for PDF and Image processing on Vercel",
-  "type": "module",
-  "main": "api/webhook.js",
+  "description": "بوت تلجرام لتحويل ومعالجة ملفات PDF والصور - يعمل على Vercel",
+  "main": "api/index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.x"
+  },
   "dependencies": {
-    "telegraf": "^4.16.3"
+    "pdf-lib": "^1.17.1",
+    "jszip": "^3.10.1"
   }
 }
