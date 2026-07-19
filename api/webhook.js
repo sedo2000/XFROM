@@ -1,16 +1,16 @@
-require('dotenv').config();
-const { Telegraf, Markup } = require('telegraf');
+import { Telegraf, Markup } from 'telegraf';
 
+// تفعيل البوت باستخدام التوكن من متغيرات البيئة في فيرسل
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-// 1. القائمة الرئيسية (الصورة الأولى)
+// --- 1. القائمة الرئيسية (الصورة الأولى) ---
 const mainKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('📄 عمليات PDF', 'menu_pdf')],
     [Markup.button.callback('🖼️ عمليات الصور', 'menu_images')],
     [Markup.button.callback('📝 تحويل المستندات', 'menu_docs')]
 ]);
 
-// 2. قائمة عمليات الصور (الصورة الثانية)
+// --- 2. قائمة عمليات الصور (الصورة الثانية) ---
 const imagesKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('📸 صور إلى PDF', 'img_to_pdf')],
     [Markup.button.callback('🖼️ إلى صور PDF', 'pdf_to_img')],
@@ -18,7 +18,7 @@ const imagesKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('🔙 العودة للقائمة الرئيسية', 'main_menu')]
 ]);
 
-// 3. قائمة عمليات PDF (الصورة الثالثة)
+// --- 3. قائمة عمليات PDF (الصورة الثالثة) ---
 const pdfKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('➕ دمج ملفات PDF', 'pdf_merge')],
     [Markup.button.callback('✂️ تقسيم PDF', 'pdf_split')],
@@ -34,7 +34,7 @@ const pdfKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('🔙 العودة للقائمة الرئيسية', 'main_menu')]
 ]);
 
-// 4. قائمة تحويل المستندات (الصورة الرابعة)
+// --- 4. قائمة تحويل المستندات (الصورة الرابعة) ---
 const docsKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('📝 PDF → Word', 'pdf_to_word')],
     [Markup.button.callback('📊 PDF → Excel', 'pdf_to_excel')],
@@ -47,44 +47,60 @@ const docsKeyboard = Markup.inlineKeyboard([
     [Markup.button.callback('🔙 العودة للقائمة الرئيسية', 'main_menu')]
 ]);
 
-// أمر التشغيل البداية /start
+// --- 5. أمر البدء والتنقل بين الواجهات ---
 bot.start((ctx) => {
-    ctx.reply('أهلاً بك في بوت أدوات المعالجة الحقيقي! اختر القسم المطلوب:', mainKeyboard);
+    return ctx.reply('أهلاً بك في بوت أدوات المعالجة الحقيقي! اختر القسم المطلوب:', mainKeyboard);
 });
 
-// التعامل مع التنقل بين القوائم عبر الـ Callback
-bot.action('main_menu', (ctx) => {
-    ctx.editMessageText('الأساسية المتاحة:', mainKeyboard).catch(() => {});
+bot.action('main_menu', async (ctx) => {
+    try {
+        await ctx.answerCbQuery();
+        await ctx.editMessageText('القائمة الأساسية المتاحة:', mainKeyboard);
+    } catch (e) { console.log(e); }
 });
 
-bot.action('menu_pdf', (ctx) => {
-    ctx.editMessageText('اختر أداة تعديل ملفات PDF المتاحة:', pdfKeyboard).catch(() => {});
+bot.action('menu_pdf', async (ctx) => {
+    try {
+        await ctx.answerCbQuery();
+        await ctx.editMessageText('اختر أداة تعديل ملفات PDF المتاحة:', pdfKeyboard);
+    } catch (e) { console.log(e); }
 });
 
-bot.action('menu_images', (ctx) => {
-    ctx.editMessageText('اختر عمليات تحويل ومعالجة الصور:', imagesKeyboard).catch(() => {});
+bot.action('menu_images', async (ctx) => {
+    try {
+        await ctx.answerCbQuery();
+        await ctx.editMessageText('اختر عمليات تحويل ومعالجة الصور:', imagesKeyboard);
+    } catch (e) { console.log(e); }
 });
 
-bot.action('menu_docs', (ctx) => {
-    ctx.editMessageText('اختر أداة تحويل وتغيير صيغ المستندات:', docsKeyboard).catch(() => {});
+bot.action('menu_docs', async (ctx) => {
+    try {
+        await ctx.answerCbQuery();
+        await ctx.editMessageText('اختر أداة تحويل وتغيير صيغ المستندات:', docsKeyboard);
+    } catch (e) { console.log(e); }
 });
 
-// ملقوف معالجة الضغطات على الأزرار الوظيفية (هنا تضع منطق البرمجة الفعلي لكل أداة)
+// --- 6. ملقوف معالجة ضغطات أدوات المعالجة ---
 bot.action(/^(pdf_|img_|word_|excel_|ppt_|html_)/, async (ctx) => {
     const actionData = ctx.callbackQuery.data;
-    
-    // مثال لمعالجة عملية معينة بعد الضغط
-    await ctx.answerCbQuery('تم اختيار الأداة بنجاح');
-    await ctx.reply(`لقد قمت باختيار الأداة البرمجية: [${actionData}]. يرجى إرسال الملف المطلوب لبدء المعالجة محلياً.`);
-    
-    // هنا تقوم ببرمجة وظيفة كل زر واستقبال الملف المرفق من المستخدم
+    try {
+        await ctx.answerCbQuery('تم اختيار الأداة بنجاح');
+        await ctx.reply(`لقد قمت باختيار الأداة البرمجية: [${actionData}]. يرجى إرسال الملف المطلوب لبدء المعالجة السحابية.`);
+    } catch (e) { console.log(e); }
 });
 
-// تشغيل البوت عبر Polling
-bot.launch().then(() => {
-    console.log('البوت يعمل الآن بنظام Polling الفعلي ومتطابق تماماً مع واجهات الأزرار المرفقة.');
-});
-
-// إغلاق آمن
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// --- 7. تصدير الدالة السحابية لتشغيل الـ Webhook على Vercel ---
+export default async (req, res) => {
+    try {
+        if (req.method === 'POST') {
+            // معالجة التحديث القادم من تليجرام فوراً
+            await bot.handleUpdate(req.body);
+            res.status(200).send('OK');
+        } else {
+            res.status(200).send('Xform Webhook Handler is Active!');
+        }
+    } catch (error) {
+        console.error('Webhook Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
