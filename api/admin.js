@@ -9,15 +9,19 @@
 // لم تُحدَّد وسيلة دفع، فلا يمكن ربط تحصيل حقيقي تلقائيًا دون تفاصيل إضافية
 // (مثل Stripe أو بوابة دفع محلية).
 
-const U = require('./upload.js');
-const D = require('./db.js');
-
 function parseAdminIds() {
-  return String(process.env.ADMIN_IDS || '')
+  const idsStr = process.env.ADMIN_IDS;
+  if (!idsStr) return []; // إذا كان المتغير غير موجود، نخرج فوراً بمصفوفة فارغة دون انهيار
+  
+  return String(idsStr)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-    .map(Number);
+    .map((id) => {
+      const num = Number(id);
+      return Number.isFinite(num) ? num : null;
+    })
+    .filter((id) => id !== null);
 }
 
 function isAdmin(chatId) {
